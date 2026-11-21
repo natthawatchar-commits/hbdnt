@@ -4,31 +4,448 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Suksant Wan Kerd</title>
+    <!-- นำเข้าฟอนต์สวยๆ จาก Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Mali:wght@500;700&family=Pacifico&display=swap" rel="stylesheet">
+    
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
         body {
-            background-color: #f6f4ee; 
+            background-color: #f6f4ee;
             height: 100vh;
             width: 100vw;
             display: flex;
+            flex-direction: column;
             justify-content: center;
             align-items: center;
             overflow: hidden;
+            font-family: 'Mali', sans-serif;
+            position: relative;
         }
+
+        /* ข้อความบอกให้กดกล่องของขวัญ */
+        .hint-text {
+            margin-bottom: 50px;
+            color: #7c6a58;
+            font-size: 1.15rem;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+            transition: all 0.3s ease;
+            text-align: center;
+            z-index: 10;
+        }
+        .hint-text.hidden {
+            opacity: 0;
+            transform: translateY(-15px);
+            pointer-events: none;
+        }
+
+        /* คอนเทนเนอร์กล่องของขวัญ */
+        .gift-container {
+            position: relative;
+            width: 170px;
+            height: 170px;
+            cursor: pointer;
+            z-index: 10;
+            transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.5s ease;
+        }
+        .gift-container:hover {
+            transform: scale(1.04);
+        }
+        .gift-container.opened {
+            opacity: 0;
+            pointer-events: none;
+            transform: scale(1.3);
+        }
+
+        /* ตัวกล่องด้านล่าง */
+        .gift-box {
+            position: absolute;
+            bottom: 0;
+            left: 10px;
+            width: 150px;
+            height: 120px;
+            background: linear-gradient(135deg, #ff758c 0%, #ff7eb3 100%);
+            border-radius: 0 0 12px 12px;
+            box-shadow: 0 15px 35px rgba(255, 117, 140, 0.25);
+            overflow: hidden;
+        }
+        /* ริบบิ้นแนวตั้งบนตัวกล่อง */
+        .gift-box::before {
+            content: "";
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 28px;
+            height: 100%;
+            background-color: #ffe082;
+            box-shadow: 0 0 8px rgba(0,0,0,0.08);
+        }
+
+        /* ฝากล่องของขวัญ */
+        .gift-lid {
+            position: absolute;
+            top: 22px;
+            left: 0;
+            width: 170px;
+            height: 36px;
+            background: linear-gradient(135deg, #ff637d 0%, #ff70a6 100%);
+            border-radius: 8px;
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.12);
+            z-index: 3;
+            transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.5s ease;
+        }
+        /* ริบบิ้นบนฝากล่อง */
+        .gift-lid::before {
+            content: "";
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 30px;
+            height: 100%;
+            background-color: #ffd54f;
+        }
+
+        /* โบว์ด้านบนสุด */
+        .gift-bow {
+            position: absolute;
+            top: -2px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 70px;
+            height: 28px;
+            z-index: 2;
+            transition: transform 0.6s ease, opacity 0.5s ease;
+        }
+        .gift-bow::before,
+        .gift-bow::after {
+            content: "";
+            position: absolute;
+            width: 32px;
+            height: 26px;
+            border: 7px solid #ffd54f;
+            border-radius: 50% 50% 0 50%;
+            top: 0;
+        }
+        .gift-bow::before {
+            left: 2px;
+            transform: rotate(-15deg);
+        }
+        .gift-bow::after {
+            right: 2px;
+            border-radius: 50% 50% 50% 0;
+            transform: rotate(15deg);
+        }
+
+        /* แอนิเมชันสั่นระดับ 1 (กดครั้งที่ 1) */
+        .shake-1 {
+            animation: shakeLevel1 0.55s ease-in-out;
+        }
+        @keyframes shakeLevel1 {
+            0%, 100% { transform: rotate(0deg) scale(1); }
+            20% { transform: rotate(-7deg) scale(1.05); }
+            40% { transform: rotate(7deg) scale(1.05); }
+            60% { transform: rotate(-4deg) scale(1.03); }
+            80% { transform: rotate(4deg) scale(1.03); }
+        }
+
+        /* แอนิเมชันสั่นระดับ 2 (กดครั้งที่ 2 - แรงขึ้นและพองตัว) */
+        .shake-2 {
+            animation: shakeLevel2 0.7s ease-in-out;
+        }
+        @keyframes shakeLevel2 {
+            0%, 100% { transform: rotate(0deg) scale(1.08); }
+            15% { transform: rotate(-14deg) scale(1.18) translateY(-8px); }
+            30% { transform: rotate(14deg) scale(1.22) translateY(-12px); }
+            45% { transform: rotate(-12deg) scale(1.20) translateY(-8px); }
+            60% { transform: rotate(12deg) scale(1.18) translateY(-10px); }
+            75% { transform: rotate(-8deg) scale(1.15); }
+            90% { transform: rotate(8deg) scale(1.12); }
+        }
+
+        /* จังหวะฝาเปิดกระเด็น (กดครั้งที่ 3) */
+        .gift-container.pop-open .gift-lid {
+            transform: translateY(-140px) rotate(-25deg);
+            opacity: 0;
+        }
+        .gift-container.pop-open .gift-bow {
+            transform: translate(-50%, -160px) rotate(35deg);
+            opacity: 0;
+        }
+
+        /* เอฟเฟกสะเก็ดดาว/ประกายตอนกดรอบ 1 และ 2 */
+        .spark {
+            position: absolute;
+            pointer-events: none;
+            font-size: 20px;
+            z-index: 15;
+            animation: sparkFly 0.85s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        @keyframes sparkFly {
+            0% {
+                transform: translate(0, 0) scale(0.4) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translate(var(--tx), var(--ty)) scale(1.3) rotate(180deg);
+                opacity: 0;
+            }
+        }
+
+        /* หน้าจอแสดงข้อความ Happy Birthday และรูปลายมือ */
+        .card-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -40%) scale(0.75);
+            width: 92%;
+            max-width: 620px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+            z-index: 20;
+        }
+        .card-content.show {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        /* ฟอนต์ Happy Birthday สวยๆ */
+        .hbd-title {
+            font-family: 'Pacifico', cursive;
+            font-size: clamp(2.6rem, 8vw, 4.4rem);
+            font-weight: 400;
+            background: linear-gradient(135deg, #ff5e7e 0%, #ff9a44 50%, #f06292 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            filter: drop-shadow(0 4px 10px rgba(255, 117, 140, 0.25));
+            margin-bottom: 18px;
+            padding: 5px 15px;
+            line-height: 1.3;
+            animation: titleFloat 3s ease-in-out infinite;
+        }
+        @keyframes titleFloat {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-6px); }
+        }
+
         .handwriting-img {
-            max-width: 85%;
-            max-height: 85vh;
+            max-width: 100%;
+            max-height: 56vh;
             object-fit: contain;
-            mix-blend-mode: multiply; 
-            animation: fadeIn 1.5s ease-in-out;
+            mix-blend-mode: multiply;
         }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+
+        /* ลูกโป่ง */
+        .balloon {
+            position: absolute;
+            bottom: -120px;
+            width: 48px;
+            height: 60px;
+            border-radius: 50% 50% 50% 50% / 45% 45% 55% 55%;
+            z-index: 15;
+            pointer-events: none;
+            animation: floatUp linear forwards;
+        }
+        .balloon::before {
+            content: "";
+            position: absolute;
+            bottom: -6px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 8px;
+            height: 6px;
+            background-color: inherit;
+            clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+        }
+        .balloon::after {
+            content: "";
+            position: absolute;
+            bottom: -45px;
+            left: 50%;
+            width: 1.5px;
+            height: 40px;
+            background-color: rgba(140, 123, 107, 0.45);
+        }
+        @keyframes floatUp {
+            0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+            50% { transform: translateY(-55vh) rotate(6deg); }
+            100% { transform: translateY(-120vh) rotate(-6deg); opacity: 0.85; }
+        }
+
+        /* กระดาษสี Confetti ตอนกล่องเปิด */
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            z-index: 18;
+            pointer-events: none;
+            animation: confettiBurst 1.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        @keyframes confettiBurst {
+            0% {
+                transform: translate(0, 0) rotate(0deg) scale(1);
+                opacity: 1;
+            }
+            100% {
+                transform: translate(var(--cx), var(--cy)) rotate(720deg) scale(0.5);
+                opacity: 0;
+            }
         }
     </style>
 </head>
 <body>
-    <img src="hbd.webp" alt="Happy Birthday" class="handwriting-img">
+
+    <p class="hint-text" id="hintText">แตะที่กล่องของขวัญสิ </p>
+
+    <!-- กล่องของขวัญตรงกลาง -->
+    <div class="gift-container" id="giftBox" onclick="handleGiftClick()">
+        <div class="gift-bow"></div>
+        <div class="gift-lid"></div>
+        <div class="gift-box"></div>
+    </div>
+
+    <!-- เนื้อหาที่จะแสดงเมื่อกดครบ 3 ครั้ง -->
+    <div class="card-content" id="cardContent">
+        <h1 class="hbd-title">Happy Birthday!</h1>
+        <img src="hbd.webp" alt="Happy Birthday" class="handwriting-img">
+    </div>
+
+    <script>
+        let clickCount = 0;
+
+        function handleGiftClick() {
+            if (clickCount >= 3) return;
+            clickCount++;
+
+            const giftBox = document.getElementById('giftBox');
+            const hintText = document.getElementById('hintText');
+            const cardContent = document.getElementById('cardContent');
+
+            // รีเซ็ตคลาสสั่นก่อนใส่ใหม่เพื่อให้กดซ้ำแล้วสั่นต่อเนื่อง
+            giftBox.classList.remove('shake-1', 'shake-2');
+            void giftBox.offsetWidth; // บังคับให้เบราว์เซอร์รีเฟรชแอนิเมชัน
+
+            if (clickCount === 1) {
+                // รอบที่ 1: สั่นเบา + เอฟเฟกประกายเล็กน้อย
+                giftBox.classList.add('shake-1');
+                hintText.textContent = "เอ๊ะ เหมือนมีอะไรขยับข้างใน... กดอีกที! ";
+                spawnSparks(10, 110);
+            } 
+            else if (clickCount === 2) {
+                // รอบที่ 2: สั่นแรง + เอฟเฟกพุ่งเยอะขึ้น
+                giftBox.classList.add('shake-2');
+                hintText.textContent = "ใกล้เปิดแล้ว!! กดอีกทีเดียว! ";
+                spawnSparks(26, 190);
+            } 
+            else if (clickCount === 3) {
+                // รอบที่ 3: เปิดกล่อง + กระดาษสี + ลูกโป่ง + โชว์การ์ด
+                hintText.classList.add('hidden');
+                giftBox.classList.add('pop-open');
+                
+                spawnConfetti(55);
+                launchBalloons();
+
+                setTimeout(() => {
+                    giftBox.classList.add('opened');
+                    cardContent.classList.add('show');
+                }, 400);
+            }
+        }
+
+        // สร้างเอฟเฟกประกายดาวเด้งออกจากกล่อง
+        function spawnSparks(count, maxDistance) {
+            const symbols = ['✨', '⭐', '💛', '💫', '🌟'];
+            const rect = document.getElementById('giftBox').getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+
+            for (let i = 0; i < count; i++) {
+                const spark = document.createElement('div');
+                spark.classList.add('spark');
+                spark.textContent = symbols[Math.floor(Math.random() * symbols.length)];
+
+                const angle = Math.random() * Math.PI * 2;
+                const distance = 40 + Math.random() * maxDistance;
+                const tx = Math.cos(angle) * distance + 'px';
+                const ty = Math.sin(angle) * distance - 30 + 'px';
+
+                spark.style.left = centerX + 'px';
+                spark.style.top = centerY + 'px';
+                spark.style.setProperty('--tx', tx);
+                spark.style.setProperty('--ty', ty);
+                spark.style.fontSize = (14 + Math.random() * 14) + 'px';
+
+                document.body.appendChild(spark);
+                setTimeout(() => spark.remove(), 850);
+            }
+        }
+
+        // สร้างเอฟเฟกกระดาษสีระเบิดตอนเปิดกล่องรอบ 3
+        function spawnConfetti(count) {
+            const colors = ['#ff5e7e', '#ffd54f', '#4dd0e1', '#aed581', '#ba68c8', '#ff8a65'];
+            const rect = document.getElementById('giftBox').getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+
+            for (let i = 0; i < count; i++) {
+                const conf = document.createElement('div');
+                conf.classList.add('confetti');
+                conf.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                conf.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+
+                const angle = Math.random() * Math.PI * 2;
+                const distance = 80 + Math.random() * 260;
+                const cx = Math.cos(angle) * distance + 'px';
+                const cy = Math.sin(angle) * distance - 60 + 'px';
+
+                conf.style.left = centerX + 'px';
+                conf.style.top = centerY + 'px';
+                conf.style.setProperty('--cx', cx);
+                conf.style.setProperty('--cy', cy);
+
+                document.body.appendChild(conf);
+                setTimeout(() => conf.remove(), 1800);
+            }
+        }
+
+        // ปล่อยลูกโป่งลอยขึ้น
+        function launchBalloons() {
+            const colors = ['#ff8a80', '#ffd180', '#ffff8d', '#ccff90', '#80d8ff', '#b388ff', '#ff80ab'];
+            const balloonCount = 30;
+
+            for (let i = 0; i < balloonCount; i++) {
+                setTimeout(() => {
+                    const balloon = document.createElement('div');
+                    balloon.classList.add('balloon');
+
+                    const color = colors[Math.floor(Math.random() * colors.length)];
+                    const leftPos = Math.random() * 94;
+                    const duration = 3.5 + Math.random() * 2.5;
+                    const scale = 0.75 + Math.random() * 0.5;
+
+                    balloon.style.backgroundColor = color;
+                    balloon.style.left = leftPos + 'vw';
+                    balloon.style.animationDuration = duration + 's';
+                    balloon.style.transform = `scale(${scale})`;
+
+                    document.body.appendChild(balloon);
+                    setTimeout(() => balloon.remove(), duration * 1000);
+                }, i * 100);
+            }
+        }
+    </script>
 </body>
 </html>
